@@ -1,0 +1,16 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/gigs"
+  to = "/.netlify/functions/gigs"
+  status = 200
+
+[[redirects]]
+  from = "/api/invoice"
+  to = "/.netlify/functions/invoice"
+  status = 200
+
+[functions.remind]
+  schedule = "0 13 * * *"

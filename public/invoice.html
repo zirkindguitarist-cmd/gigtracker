@@ -1,0 +1,50 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invoice</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+body{margin:0;background:#f4f1ec;color:#1d1b19;font:16px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+.w{max-width:560px;margin:0 auto;padding:16px}.c{background:#fff;border-radius:14px;padding:22px;box-shadow:0 1px 6px #0001}
+h1{margin:0 0 2px;font-size:26px}.m{color:#7a746c;font-size:14px}.k{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee}
+.t{font-size:22px;font-weight:700}.p{background:#f4efff;border-radius:10px;padding:12px 14px;margin-top:16px}
+.b{display:block;text-align:center;text-decoration:none;color:#fff;border-radius:10px;padding:12px;margin-top:10px;font-weight:600}.cash{background:#00b64f}.zelle{background:#6d1ed4}
+button{font:inherit;border:0;border-radius:10px;padding:12px 16px;background:#6d3df0;color:#fff;margin-top:16px;width:100%}
+</style></head><body><div class="w"><div class="c" id="o">Loading…</div></div>
+<script>
+const q=new URLSearchParams(location.search),o=document.getElementById("o");
+const money=n=>"$"+(Number(n)||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtD=d=>new Date(d+"T12:00").toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric",year:"numeric"});
+const t12=t=>{if(!t)return"";let[h,m]=t.split(":");h=+h;return(h%12||12)+":"+m+(h<12?" AM":" PM")};
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const CASH="https://cash.app/$YZirkind",ZELLE="https://enroll.zellepay.com/qr-codes?data=ewogICAgIm5hbWUiOiAiWUlUU0NIT0siLAogICAgImFjdGlvbiI6ICJwYXltZW50IiwKICAgICJ0b2tlbiI6ICIxMzQ3ODUyNTkyMSIKfQ==",QR="data:image/png;base64,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";
+function pdf(g){
+ const J=window.jspdf;if(!J){alert("PDF library didn't load. Check your connection.");return}
+ const p=new J.jsPDF({unit:"pt",format:"letter"}),fee=+g.fee||0,dep=+g.deposit||0,n="INV-"+g.date.replace(/-/g,"")+"-"+g.id.slice(-3).toUpperCase();
+ p.setFont("helvetica","bold").setFontSize(26).text("INVOICE",50,70);
+ p.setFontSize(11).setFont("helvetica","normal").text("Yitschok Zirkind\nLive Keyboard & DJ · Chicago, IL",50,95);
+ p.text("Invoice #: "+n+"\nEvent date: "+fmtD(g.date),360,70);
+ p.setFont("helvetica","bold").text("BILL TO",50,165);p.setFont("helvetica","normal").text([g.client,g.phone,g.email].filter(Boolean),50,181);
+ p.setDrawColor(200).line(50,240,562,240);p.setFont("helvetica","bold").text("Description",50,258).text("Amount",562,258,{align:"right"});p.line(50,266,562,266);
+ p.setFont("helvetica","normal");const d=[(g.title||"Live music")+(g.type?" ("+g.type+")":""),g.venue?"at "+g.venue:"",[t12(g.start),t12(g.end)].filter(Boolean).join(" – ")].filter(Boolean);
+ p.text(d,50,286);p.text(money(fee),562,286,{align:"right"});
+ let y=286+d.length*14+30;p.line(300,y-14,562,y-14);
+ p.text("Subtotal",300,y).text(money(fee),562,y,{align:"right"});y+=18;
+ if(dep){p.text("Deposit received",300,y).text("-"+money(dep),562,y,{align:"right"});y+=18}
+ p.setFont("helvetica","bold").setFontSize(13).text("Balance due",300,y+6).text(money(fee-dep),562,y+6,{align:"right"});
+ p.setFont("helvetica","bold").setFontSize(11).text("HOW TO PAY",50,y+60);p.setFont("helvetica","normal").setFontSize(11);p.setTextColor(30,80,200);p.textWithLink("Pay with Cash App: cash.app/$YZirkind",50,y+80,{url:CASH});p.textWithLink("Pay with Zelle (tap to open)",50,y+98,{url:ZELLE});p.setTextColor(0);p.text("PayPal: 347-852-5921",50,y+116);try{p.addImage(QR,"PNG",430,y+50,110,110)}catch(e){}p.setFontSize(8).text("Scan with your banking app (Zelle)",430,y+170);p.setFontSize(10).text("Thank you for having me be part of your event!",50,y+150);
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([p.output("arraybuffer")],{type:"application/pdf"}));a.download=n+".pdf";document.body.appendChild(a);a.click();a.remove()}
+fetch("/api/invoice?id="+encodeURIComponent(q.get("id")||"")+"&t="+encodeURIComponent(q.get("t")||"")).then(async r=>{
+ if(!r.ok){o.textContent="This invoice link isn't valid.";return}
+ const g=await r.json(),fee=+g.fee||0,dep=+g.deposit||0;
+ o.innerHTML="<h1>Invoice</h1><div class='m'>From Yitschok Zirkind · Live Keyboard &amp; DJ</div><div style='height:14px'></div>"+
+  "<div class='k'><span>Event</span><span>"+esc(g.title)+"</span></div><div class='k'><span>Date</span><span>"+esc(fmtD(g.date))+"</span></div>"+
+  (g.start?"<div class='k'><span>Time</span><span>"+esc([t12(g.start),t12(g.end)].filter(Boolean).join(" – "))+"</span></div>":"")+
+  (g.venue?"<div class='k'><span>Venue</span><span>"+esc(g.venue)+"</span></div>":"")+
+  (g.client?"<div class='k'><span>Bill to</span><span>"+esc(g.client)+"</span></div>":"")+
+  "<div class='k'><span>Total</span><span>"+money(fee)+"</span></div>"+
+  (dep?"<div class='k'><span>Deposit received</span><span>-"+money(dep)+"</span></div>":"")+
+  "<div class='k t'><span>Balance due</span><span>"+money(fee-dep)+"</span></div>"+
+  "<div class='p'><b>How to pay</b><a class='b cash' href='"+CASH+"'>Pay with Cash App</a><a class='b zelle' href='"+ZELLE+"'>Pay with Zelle</a><div style='margin-top:10px'>PayPal: 347-852-5921</div><div style='text-align:center;margin-top:12px'><img src='"+QR+"' width='150' height='150' alt='Zelle QR'><br><small>Or scan with your banking app (Zelle)</small></div></div><button id='d'>Download PDF</button>";
+ document.getElementById("d").onclick=()=>pdf(g)
+}).catch(()=>{o.textContent="Couldn't load the invoice."});
+</script></body></html>

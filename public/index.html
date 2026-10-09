@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gig Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--bg:#faf8f5;--card:#fff;--tx:#1d1b19;--mu:#7a746c;--ac:#6d3df0;--bd:#e7e2da;--ok:#1f9d55;--bad:#d64545;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141318;--card:#1e1c24;--tx:#f1eee9;--mu:#9a94a3;--bd:#2f2c38;--ac:#9b7bff}}
+:root[data-theme="dark"]{--bg:#141318;--card:#1e1c24;--tx:#f1eee9;--mu:#9a94a3;--bd:#2f2c38;--ac:#9b7bff}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,Segoe UI,sans-serif}
+.w{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:0}header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+button{font:inherit;border:0;border-radius:10px;padding:10px 14px;background:var(--ac);color:#fff;cursor:pointer}
+button.g{background:transparent;color:var(--tx);border:1px solid var(--bd)}button.d{background:var(--bad)}
+.day{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu);margin:18px 0 6px}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer}
+.c b{display:block}.c span{color:var(--mu);font-size:14px}.pill{float:right;font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--bd)}
+.paid{color:var(--ok);border-color:var(--ok)}.unp{color:var(--bad);border-color:var(--bad)}
+.m{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-end;justify-content:center;z-index:9}
+.m.o{display:flex}.s{background:var(--bg);width:100%;max-width:640px;max-height:92%;overflow:auto;border-radius:18px 18px 0 0;padding:18px;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
+label{display:block;font-size:13px;color:var(--mu);margin:10px 0 3px}
+input,textarea,select{width:100%;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx)}
+.r{display:flex;gap:8px}.r>*{flex:1}.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.k{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd)}.k span:first-child{color:var(--mu)}
+.e{text-align:center;color:var(--mu);padding:40px 0}
+</style></head><body><div class="w">
+<header><h1>🎹 Gig Tracker</h1><button id="add">+ New gig</button></header>
+<div id="list"></div>
+<div class="row"><button class="g" id="tp">Show past gigs</button></div>
+<p id="note" style="color:var(--mu);font-size:13px"></p>
+</div>
+<div class="m" id="m"><div class="s" id="s"></div></div>
+<script>
+const CASH="https://cash.app/$YZirkind",ZELLE="https://enroll.zellepay.com/qr-codes?data=ewogICAgIm5hbWUiOiAiWUlUU0NIT0siLAogICAgImFjdGlvbiI6ICJwYXltZW50IiwKICAgICJ0b2tlbiI6ICIxMzQ3ODUyNTkyMSIKfQ==",QR="data:image/png;base64,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";
+const $=id=>document.getElementById(id);
+let gigs=[],db=null,showPast=false,col=null;
+const F=[["title","Event name"],["type","Type (wedding, bar mitzvah, DJ set…)"],["date","Date","date"],["start","Start","time"],["end","End","time"],["venue","Venue"],["address","Address"],["client","Client name"],["phone","Client phone"],["email","Client email"],["fee","Fee ($)","number"],["deposit","Deposit received ($)","number"],["notes","Notes (setlist, load-in, contact on site…)","area"]];
+const money=n=>"$"+(Number(n)||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtD=d=>new Date(d+"T12:00").toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric",year:"numeric"});
+const t12=t=>{if(!t)return"";let[h,m]=t.split(":");h=+h;return(h%12||12)+":"+m+(h<12?" AM":" PM")};
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+function render(){
+ const t=today(),L=gigs.filter(g=>showPast?g.date<t:g.date>=t).sort((a,b)=>showPast?b.date.localeCompare(a.date):(a.date+(a.start||"")).localeCompare(b.date+(b.start||"")));
+ $("tp").textContent=showPast?"Show upcoming gigs":"Show past gigs";
+ if(!L.length){$("list").innerHTML='<div class="e">'+(showPast?"No past gigs yet.":"No upcoming gigs. Tap + New gig to add your first.")+"</div>";return}
+ let h="",last="";
+ for(const g of L){if(g.date!==last){h+='<div class="day">'+fmtD(g.date)+"</div>";last=g.date}
+  const bal=(+g.fee||0)-(+g.deposit||0),P=g.paid||(g.fee&&bal<=0);
+  h+='<div class="c" data-id="'+g.id+'"><span class="pill '+(P?"paid":"unp")+'">'+(g.fee?(P?"Paid":"Owed "+money(bal)):"No fee")+"</span><b>"+esc(g.title||"Untitled gig")+"</b><span>"+esc([t12(g.start),g.venue].filter(Boolean).join(" · "))+"</span></div>"}
+ $("list").innerHTML=h}
+function open(h){$("s").innerHTML=h;$("m").classList.add("o")}
+function close(){$("m").classList.remove("o")}
+$("m").onclick=e=>{if(e.target.id==="m")close()};
+$("list").onclick=e=>{const c=e.target.closest(".c");if(c)detail(c.dataset.id)};
+$("add").onclick=()=>form({date:today()});
+$("tp").onclick=()=>{showPast=!showPast;render()};
+function detail(id){const g=gigs.find(x=>x.id===id);if(!g)return;
+ const rows=[["Date",fmtD(g.date)],["Time",[t12(g.start),t12(g.end)].filter(Boolean).join(" – ")],["Type",g.type],["Venue",g.venue],["Address",g.address],["Client",g.client],["Phone",g.phone],["Email",g.email],["Fee",g.fee?money(g.fee):""],["Deposit",g.deposit?money(g.deposit):""],["Balance due",g.fee?money((+g.fee||0)-(+g.deposit||0)):""],["Status",g.paid?"Paid "+(g.paidDate||""):""]].filter(r=>r[1]);
+ let h="<h2 style='margin:0 0 8px'>"+esc(g.title||"Untitled gig")+"</h2>"+rows.map(r=>'<div class="k"><span>'+r[0]+"</span><span style='text-align:right'>"+esc(r[1])+"</span></div>").join("");
+ if(g.address)h+='<p><a style="color:var(--ac)" target="_blank" rel="noopener" href="https://maps.google.com/?q='+encodeURIComponent(g.address)+'">Open in Maps</a></p>';
+ if(g.notes)h+="<p style='white-space:pre-wrap'>"+esc(g.notes)+"</p>";
+ h+='<div class="row"><button id="ed">Edit</button><button id="pd">'+(g.paid?"Mark unpaid":"Mark paid")+'</button><button id="iv">Invoice PDF</button><button id="ic">Add to calendar (alerts)</button><button class="g" id="x">Close</button><button class="d" id="del">Delete</button></div>';
+ open(h);
+ $("x").onclick=close;$("ed").onclick=()=>form(g);$("del").onclick=async()=>{if(confirm("Delete this gig?")){await save(g.id,null);close()}};
+ $("pd").onclick=async()=>{await save(g.id,{...g,paid:!g.paid,paidDate:g.paid?"":today()});detail(g.id)};$("iv").onclick=()=>invoice(g);$("ic").onclick=()=>ics(g)}
+function form(g){
+ let h="<h2 style='margin:0'>"+(g.id?"Edit gig":"New gig")+"</h2>";
+ for(const[k,l,t]of F){h+="<label>"+l+"</label>"+(t==="area"?'<textarea rows="4" data-k="'+k+'">'+esc(g[k])+"</textarea>":'<input data-k="'+k+'" type="'+(t||"text")+'" value="'+esc(g[k])+'">')}
+ h+='<div class="row"><button id="sv">Save</button><button class="g" id="cn">Cancel</button></div>';open(h);
+ $("cn").onclick=()=>g.id?detail(g.id):close();
+ $("sv").onclick=async()=>{const o={...g};document.querySelectorAll("[data-k]").forEach(i=>o[i.dataset.k]=i.value);
+  if(!o.date){alert("Pick a date.");return}o.id=o.id||"g"+Date.now().toString(36);await save(o.id,o);detail(o.id)}}
+let pw=localStorage.getItem("pw")||"";
+async function api(method,body){
+ if(!pw){pw=prompt("Password")||"";if(!pw)return null;localStorage.setItem("pw",pw)}
+ try{const r=await fetch("/api/gigs",{method,headers:{"content-type":"application/json","x-pass":pw},body:body?JSON.stringify(body):undefined});
+  if(r.status===401){localStorage.removeItem("pw");pw="";alert("Wrong password. Reload and try again.");return null}
+  if(!r.ok){alert("Server error "+r.status);return null}return await r.json()}catch(e){alert("Can't reach the server.");return null}}
+async function refresh(){const d=await api("GET");if(d){gigs=d;render()}}
+async function save(id,o){const d=await api("POST",o?{gig:o}:{del:id});if(d)await refresh()}
+async function dl(name,data){const ty=name.endsWith(".ics")?"text/calendar":"application/pdf";const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type:ty}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+function invoice(g){
+ const J=window.jspdf;if(!J){alert("PDF library didn't load. Check your connection.");return}
+ const p=new J.jsPDF({unit:"pt",format:"letter"}),fee=+g.fee||0,dep=+g.deposit||0,n="INV-"+(g.date||"").replace(/-/g,"")+"-"+g.id.slice(-3).toUpperCase();
+ p.setFont("helvetica","bold").setFontSize(26).text("INVOICE",50,70);
+ p.setFontSize(11).setFont("helvetica","normal").text("Yitschok Zirkind\nLive Keyboard & DJ · Chicago, IL",50,95);
+ p.text("Invoice #: "+n+"\nIssued: "+fmtD(today())+"\nEvent date: "+fmtD(g.date),360,70);
+ p.setFont("helvetica","bold").text("BILL TO",50,165);p.setFont("helvetica","normal").text([g.client||"",g.phone||"",g.email||""].filter(Boolean),50,181);
+ p.setDrawColor(200).line(50,240,562,240);p.setFont("helvetica","bold").text("Description",50,258).text("Amount",562,258,{align:"right"});p.line(50,266,562,266);
+ p.setFont("helvetica","normal");const d=[(g.title||"Live music")+(g.type?" ("+g.type+")":""),g.venue?"at "+g.venue:"",[t12(g.start),t12(g.end)].filter(Boolean).join(" – ")].filter(Boolean);
+ p.text(d,50,286);p.text(money(fee),562,286,{align:"right"});
+ let y=286+d.length*14+30;p.line(300,y-14,562,y-14);
+ p.text("Subtotal",300,y).text(money(fee),562,y,{align:"right"});y+=18;
+ if(dep){p.text("Deposit received",300,y).text("-"+money(dep),562,y,{align:"right"});y+=18}
+ p.setFont("helvetica","bold").setFontSize(13).text("Balance due",300,y+6).text(money(fee-dep),562,y+6,{align:"right"});
+ p.setFont("helvetica","bold").setFontSize(11).text("HOW TO PAY",50,y+60);p.setFont("helvetica","normal").setFontSize(11);p.setTextColor(30,80,200);p.textWithLink("Pay with Cash App: cash.app/$YZirkind",50,y+80,{url:CASH});p.textWithLink("Pay with Zelle (tap to open)",50,y+98,{url:ZELLE});p.setTextColor(0);p.text("PayPal: 347-852-5921",50,y+116);try{p.addImage(QR,"PNG",430,y+50,110,110)}catch(e){}p.setFontSize(8).text("Scan with your banking app (Zelle)",430,y+170);p.setFontSize(10).text("Thank you for having me be part of your event!",50,y+150);
+ dl(n+".pdf",p.output("arraybuffer"))}
+function ics(g){
+ const z=s=>s.replace(/[-:]/g,""),st=z(g.date)+"T"+z(g.start||"12:00")+"00",en=z(g.date)+"T"+z(g.end||g.start||"13:00")+"00";
+ const al=(t,m)=>"BEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:"+m+"\r\nTRIGGER:"+t+"\r\nEND:VALARM\r\n";
+ const T=(s=>String(s||"").replace(/[\\;,]/g,"\\$&").replace(/\n/g,"\\n"));
+ const s="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//GigTracker//EN\r\nBEGIN:VEVENT\r\nUID:"+g.id+"@gigtracker\r\nDTSTAMP:"+new Date().toISOString().replace(/[-:]|\.\d+/g,"")+"\r\nDTSTART:"+st+"\r\nDTEND:"+en+"\r\nSUMMARY:"+T("Gig: "+g.title)+"\r\nLOCATION:"+T([g.venue,g.address].filter(Boolean).join(", "))+"\r\nDESCRIPTION:"+T(g.notes)+"\r\n"+al("-P7D","Gig in 1 week")+al("-P2D","Gig in 2 days")+al("-PT3H","Gig today")+"END:VEVENT\r\nEND:VCALENDAR\r\n";
+ dl("gig-"+g.date+".ics",s)}
+refresh();
+</script></body></html>
