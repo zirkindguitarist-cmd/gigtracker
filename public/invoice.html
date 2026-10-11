@@ -25,7 +25,7 @@ function pdf(g){
  p.text("Invoice #: "+n+"\nEvent date: "+fmtD(g.date),360,70);
  p.setFont("helvetica","bold").text("BILL TO",50,165);p.setFont("helvetica","normal").text([g.client,g.phone,g.email].filter(Boolean),50,181);
  p.setDrawColor(200).line(50,240,562,240);p.setFont("helvetica","bold").text("Description",50,258).text("Amount",562,258,{align:"right"});p.line(50,266,562,266);
- p.setFont("helvetica","normal");const d=[(g.title||"Live music")+(g.type?" ("+g.type+")":""),g.venue?"at "+g.venue:"",[t12(g.start),t12(g.end)].filter(Boolean).join(" – ")].filter(Boolean);
+ p.setFont("helvetica","normal");const d=[(g.title||"Live music"),g.venue?"at "+g.venue:"",[t12(g.start),t12(g.end)].filter(Boolean).join(" – ")].filter(Boolean);
  p.text(d,50,286);p.text(money(fee),562,286,{align:"right"});
  let y=286+d.length*14+30;p.line(300,y-14,562,y-14);
  p.text("Subtotal",300,y).text(money(fee),562,y,{align:"right"});y+=18;
