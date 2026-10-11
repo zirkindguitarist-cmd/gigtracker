@@ -38,7 +38,7 @@ const CASH="https://cash.app/$YZirkind",ZELLE="https://enroll.zellepay.com/qr-co
 const $=id=>document.getElementById(id);
 let gigs=[],db=null,showPast=false,col=null;
 const TY=["Wedding","Bar Mitzvah","Chabad House event","Achnasas Sefer Torah","Other"];
-const F=[["type","Event type","sel"],["date","Date","date"],["start","Start","time"],["end","End","time"],["venue","Venue"],["address","Address"],["client","Client name"],["phone","Client phone"],["email","Client email"],["fee","Fee ($)","number"],["deposit","Deposit received ($)","number"],["notes","Notes (setlist, load-in, contact on site…)","area"]];
+const F=[["type","Event type","sel"],["date","Date","date"],["start","Start time","time"],["venue","Venue"],["address","Address"],["client","Client name"],["phone","Client phone"],["email","Client email"],["fee","Fee ($)","number"],["deposit","Deposit received ($)","number"],["notes","Notes (setlist, load-in, contact on site…)","area"]];
 const money=n=>"$"+(Number(n)||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtD=d=>new Date(d+"T12:00").toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric",year:"numeric"});
 const t12=t=>{if(!t)return"";let[h,m]=t.split(":");h=+h;return(h%12||12)+":"+m+(h<12?" AM":" PM")};
@@ -108,7 +108,7 @@ function invoice(g){
  p.setFont("helvetica","bold").setFontSize(11).text("HOW TO PAY",50,y+60);p.setFont("helvetica","normal").setFontSize(11);p.setTextColor(30,80,200);p.textWithLink("Pay with Cash App: cash.app/$YZirkind",50,y+80,{url:CASH});p.textWithLink("Pay with Zelle (tap to open)",50,y+98,{url:ZELLE});p.setTextColor(0);p.text("PayPal: 347-852-5921",50,y+116);try{p.addImage(QR,"PNG",430,y+50,110,110)}catch(e){}p.setFontSize(8).text("Scan with your banking app (Zelle)",430,y+170);p.setFontSize(10).text("Thank you for having me be part of your event!",50,y+150);
  dl(n+".pdf",p.output("arraybuffer"))}
 function ics(g){
- const z=s=>s.replace(/[-:]/g,""),st=z(g.date)+"T"+z(g.start||"12:00")+"00",en=z(g.date)+"T"+z(g.end||g.start||"13:00")+"00";
+ const z=s=>s.replace(/[-:]/g,""),st=z(g.date)+"T"+z(g.start||"12:00")+"00",en=(()=>{const[h,m]=(g.start||"12:00").split(":").map(Number),d=new Date(g.date+"T00:00:00");d.setHours(h+3,m);const P=n=>String(n).padStart(2,"0");return d.getFullYear()+P(d.getMonth()+1)+P(d.getDate())+"T"+P(d.getHours())+P(d.getMinutes())+"00"})();
  const al=(t,m)=>"BEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:"+m+"\r\nTRIGGER:"+t+"\r\nEND:VALARM\r\n";
  const T=(s=>String(s||"").replace(/[\\;,]/g,"\\$&").replace(/\n/g,"\\n"));
  const s="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//GigTracker//EN\r\nBEGIN:VEVENT\r\nUID:"+g.id+"@gigtracker\r\nDTSTAMP:"+new Date().toISOString().replace(/[-:]|\.\d+/g,"")+"\r\nDTSTART:"+st+"\r\nDTEND:"+en+"\r\nSUMMARY:"+T("Gig: "+g.title)+"\r\nLOCATION:"+T([g.venue,g.address].filter(Boolean).join(", "))+"\r\nDESCRIPTION:"+T(g.notes)+"\r\n"+al("-P7D","Gig in 1 week")+al("-P2D","Gig in 2 days")+al("-PT3H","Gig today")+"END:VEVENT\r\nEND:VCALENDAR\r\n";
