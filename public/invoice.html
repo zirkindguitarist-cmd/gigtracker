@@ -32,7 +32,12 @@ function pdf(g){
  if(dep){p.text("Deposit received",300,y).text("-"+money(dep),562,y,{align:"right"});y+=18}
  p.setFont("helvetica","bold").setFontSize(13).text("Balance due",300,y+6).text(money(fee-dep),562,y+6,{align:"right"});
  p.setFont("helvetica","bold").setFontSize(11).text("HOW TO PAY",50,y+60);p.setFont("helvetica","normal").setFontSize(11);p.setTextColor(30,80,200);p.textWithLink("Pay with Cash App: cash.app/$YZirkind",50,y+80,{url:CASH});p.textWithLink("Pay with Zelle (tap to open)",50,y+98,{url:ZELLE});p.setTextColor(0);p.text("PayPal: 347-852-5921",50,y+116);try{p.addImage(QR,"PNG",430,y+50,110,110)}catch(e){}p.setFontSize(8).text("Scan with your banking app (Zelle)",430,y+170);p.setFontSize(10).text("Thank you for having me be part of your event!",50,y+150);
- const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([p.output("arraybuffer")],{type:"application/pdf"}));a.download=n+".pdf";document.body.appendChild(a);a.click();a.remove()}
+ sharePdf(n+".pdf",p.output("arraybuffer"))}
+async function sharePdf(name,data){
+ const blob=new Blob([data],{type:"application/pdf"});
+ try{if(navigator.canShare){const f=new File([blob],name,{type:"application/pdf"});if(navigator.canShare({files:[f]})){await navigator.share({files:[f],title:name});return}}}catch(e){if(e&&e.name==="AbortError")return}
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+
 fetch("/api/invoice?id="+encodeURIComponent(q.get("id")||"")+"&t="+encodeURIComponent(q.get("t")||"")).then(async r=>{
  if(!r.ok){o.textContent="This invoice link isn't valid.";return}
  const g=await r.json(),fee=+g.fee||0,dep=+g.deposit||0;
@@ -44,7 +49,7 @@ fetch("/api/invoice?id="+encodeURIComponent(q.get("id")||"")+"&t="+encodeURIComp
   "<div class='k'><span>Total</span><span>"+money(fee)+"</span></div>"+
   (dep?"<div class='k'><span>Deposit received</span><span>-"+money(dep)+"</span></div>":"")+
   "<div class='k t'><span>Balance due</span><span>"+money(fee-dep)+"</span></div>"+
-  "<div class='p'><b>How to pay</b><a class='b cash' href='"+CASH+"'>Pay with Cash App</a><a class='b zelle' href='"+ZELLE+"'>Pay with Zelle</a><div style='margin-top:10px'>PayPal: 347-852-5921</div><div style='text-align:center;margin-top:12px'><img src='"+QR+"' width='150' height='150' alt='Zelle QR'><br><small>Or scan with your banking app (Zelle)</small></div></div><button id='d'>Download PDF</button>";
+  "<div class='p'><b>How to pay</b><a class='b cash' href='"+CASH+"'>Pay with Cash App</a><a class='b zelle' href='"+ZELLE+"'>Pay with Zelle</a><div style='margin-top:10px'>PayPal: 347-852-5921</div><div style='text-align:center;margin-top:12px'><img src='"+QR+"' width='150' height='150' alt='Zelle QR'><br><small>Or scan with your banking app (Zelle)</small></div></div><button id='d'>Download / share PDF</button>";
  document.getElementById("d").onclick=()=>pdf(g)
 }).catch(()=>{o.textContent="Couldn't load the invoice."});
 </script></body></html>
