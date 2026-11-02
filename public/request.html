@@ -16,8 +16,8 @@ label{display:block;font-size:13px;color:#7a746c;margin:12px 0 3px}input,select,
 <label>Hall / venue name</label><input id="venue"><label>Venue address</label><input id="address" autocomplete="street-address">
 <label>Comments</label><textarea id="notes" rows="5"></textarea>
 <div class="hp"><label>Website</label><input id="website" tabindex="-1" autocomplete="off"></div>
-<button id="go">Send request</button><p id="err" style="color:#d64545"></p>
-<p class="m" style="margin-top:14px">Please put any music preferences, special requests, or needs you might have in the comments section.</p></div></div></div>
+<p class="m" style="margin:14px 0 0">Please put any music preferences, special requests, or needs you might have in the comments section.</p>
+<button id="go">Send request</button><p id="err" style="color:#d64545"></p></div></div></div>
 <script>
 const $=id=>document.getElementById(id);
 $("type").onchange=e=>{$("typeo").style.display=e.target.value==="Other"?"block":"none"};
