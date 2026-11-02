@@ -12,5 +12,10 @@
   to = "/.netlify/functions/invoice"
   status = 200
 
+[[redirects]]
+  from = "/api/pub"
+  to = "/.netlify/functions/pub"
+  status = 200
+
 [functions.remind]
   schedule = "0 13 * * *"
