@@ -1,0 +1,20 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Review request</title>
+<style>body{margin:0;background:#f4f1ec;color:#1d1b19;font:16px/1.4 system-ui,-apple-system,sans-serif}.w{max-width:520px;margin:0 auto;padding:16px}
+.c{background:#fff;border-radius:14px;padding:20px;box-shadow:0 1px 6px #0001}h1{font-size:22px;margin:0}.hd{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+label{display:block;font-size:13px;color:#7a746c;margin:12px 0 3px}input,select,textarea{width:100%;font:inherit;padding:11px;border-radius:10px;border:1px solid #ddd6cc;background:#fff;color:#1d1b19;box-sizing:border-box}
+.r{display:flex;gap:8px}.r>div{flex:1}button{font:inherit;border:0;border-radius:10px;padding:14px;background:#6d3df0;color:#fff;width:100%;margin-top:18px;font-weight:600}
+.m{color:#7a746c;font-size:14px}.hp{position:absolute;left:-9999px;height:0;overflow:hidden} button.d{background:#d64545}.k{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid #eee}.k span:first-child{color:#7a746c}</style></head>
+<body><div class="w"><div class="c" id="o">Loading…</div></div><script>
+const q=new URLSearchParams(location.search),o=document.getElementById("o"),u="/api/pub?a=decide&id="+encodeURIComponent(q.get("id")||"")+"&t="+encodeURIComponent(q.get("t")||"");
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const t12=t=>{if(!t)return"";let[h,m]=t.split(":");h=+h;return(h%12||12)+":"+m+(h<12?" AM":" PM")};
+const send=async a=>{const r=await fetch(u,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:a})});if(!r.ok){alert("Couldn't save. Try again.");return}
+ const j=await r.json();o.innerHTML="<h1>"+({approved:"✓ Approved. It's on your calendar.",denied:"Request denied and removed.",already:"This request was already handled."}[j.done]||"Done")+"</h1>"};
+fetch(u).then(async r=>{if(!r.ok){o.textContent="This request was already handled, or the link isn't valid.";return}
+ const g=await r.json();const row=(a,b)=>b?"<div class='k'><span>"+a+"</span><span style='text-align:right'>"+esc(b)+"</span></div>":"";
+ o.innerHTML="<h1>"+esc(g.title)+"</h1>"+row("Date",g.date)+row("Start",t12(g.start))+row("Venue",g.venue)+row("Address",g.address)+row("Name",g.client)+row("Phone",g.phone)+row("Email",g.email)+
+  (g.notes?"<p style='white-space:pre-wrap'>"+esc(g.notes)+"</p>":"")+
+  (g.pending?"<button id='a'>Approve</button><button class='d' id='n'>Deny</button>":"<p>This request was already approved.</p>");
+ if(g.pending){document.getElementById("a").onclick=()=>send("approve");document.getElementById("n").onclick=()=>{if(confirm("Deny and remove this request?"))send("deny")}}
+}).catch(()=>o.textContent="Couldn't load.");
+</script></body></html>
