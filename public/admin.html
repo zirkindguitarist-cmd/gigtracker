@@ -8,7 +8,7 @@ h1{font-size:22px;margin:0 0 4px}h2{font-size:18px;margin:26px 0 8px}.c{backgrou
 button{font:inherit;border:0;border-radius:10px;padding:10px 14px;background:var(--ac);color:#fff;cursor:pointer}button.g{background:transparent;color:var(--tx);border:1px solid var(--bd)}button.d{background:var(--bad)}button.k{background:var(--ok)}
 input,textarea{width:100%;font:inherit;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);margin-top:6px}
 .m{color:var(--mu);font-size:14px}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}.grid div{position:relative}.grid img,.grid video{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;display:block;background:#000}
-.grid button{position:absolute;top:4px;right:4px;padding:4px 9px}.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.bar{height:6px;background:var(--bd);border-radius:6px;margin-top:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ac);width:0}
+.grid select{width:100%;margin-top:4px;padding:4px;font-size:12px}.pc{display:inline-block;width:150px;margin:6px 6px 6px 0;vertical-align:top}.pc .sq{aspect-ratio:1;border-radius:10px;overflow:hidden;background:#000}.pc img,.pc video{width:100%;height:100%;object-fit:cover;display:block}.fo{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.fo button{padding:4px 8px;font-size:12px}.grid button{position:absolute;top:4px;right:4px;padding:4px 9px}.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.bar{height:6px;background:var(--bd);border-radius:6px;margin-top:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ac);width:0}
 </style></head><body><div class="w"><h1>Site admin</h1><p class="m"><a href="/" style="color:var(--ac)">View site</a> · <a href="/app" style="color:var(--ac)">Gig app</a></p><div id="o">Loading…</div></div>
 <script>
 const $=id=>document.getElementById(id),o=$("o");let pw=localStorage.getItem("tok")||"",D=null,cfg={};
@@ -25,16 +25,17 @@ function login(msg,err,step,pwv){o.innerHTML="<div class='c'><b>"+(step?"Enter c
 async function load(){try{D=await api("admin");cfg=D.cloud;draw()}catch(e){if(e.message!=="auth")o.textContent="Couldn't load: "+e.message}}
 function draw(){
  const ready=cfg.name&&cfg.preset;
- o.innerHTML="<h2>Upload photos &amp; videos</h2><div class='c'>"+(ready?"<p class='m'>Connected to Cloudinary: <b>"+esc(cfg.name)+"</b> (preset "+esc(cfg.preset)+")</p><input id='f' type='file' accept='image/*,video/*' multiple><div id='st' class='m'></div>":"<p>Uploads aren't set up yet. Add CLOUDINARY_CLOUD_NAME and CLOUDINARY_UPLOAD_PRESET in Netlify, then redeploy.</p>")+"<hr style='border:0;border-top:1px solid var(--bd);margin:14px 0'><b>Already uploaded in Cloudinary?</b><p class='m'>Pictures you add inside Cloudinary's own website don't appear here automatically. Open one in your Media Library, copy its link, and paste it below.</p><input id='lu' placeholder='https://res.cloudinary.com/...'><div class='row'><button class='g' id='la'>Add this link</button></div><div id='lm' class='m'></div></div>"+
- "<h2>Gallery ("+D.media.length+")</h2><div class='grid'>"+D.media.map(m=>"<div>"+(m.type==="video"?"<video muted preload='metadata' src='"+U(m.url,"f_mp4,vc_h264,q_auto").replace(/\.\w+$/,".mp4")+"#t=0.5'></video>":"<img src='"+U(m.url,"f_auto,q_auto,w_300,c_fill,h_300")+"'>")+"<button class='d' data-dm='"+m.id+"'>✕</button></div>").join("")+"</div>"+
+ o.innerHTML="<h2>Upload photos &amp; videos</h2><div class='c'>"+(ready?"<p class='m'>Connected to Cloudinary: <b>"+esc(cfg.name)+"</b> (preset "+esc(cfg.preset)+")</p><input id='f' type='file' accept='image/*,video/*' multiple><div id='st' class='m'></div><div id='pv'></div>":"<p>Uploads aren't set up yet. Add CLOUDINARY_CLOUD_NAME and CLOUDINARY_UPLOAD_PRESET in Netlify, then redeploy.</p>")+"<hr style='border:0;border-top:1px solid var(--bd);margin:14px 0'><b>Already uploaded in Cloudinary?</b><p class='m'>Pictures you add inside Cloudinary's own website don't appear here automatically. Open one in your Media Library, copy its link, and paste it below.</p><input id='lu' placeholder='https://res.cloudinary.com/...'><div class='row'><button class='g' id='la'>Add this link</button></div><div id='lm' class='m'></div></div>"+
+ "<h2>Gallery ("+D.media.length+")</h2><div class='grid'>"+D.media.map(m=>"<div><img style='object-position:"+esc(m.focus||"50% 50%")+"' src='"+(m.type==="video"?U(m.url,"so_1,f_jpg,w_300,c_limit").replace(/\.\w+$/,".jpg"):U(m.url,"f_auto,q_auto,w_300,c_limit"))+"'><select data-sf='"+m.id+"'>"+FOC.map(x=>"<option value='"+x[1]+"'"+((m.focus||"50% 50%")===x[1]?" selected":"")+">Show: "+x[0]+"</option>").join("")+"</select><button class='d' data-dm='"+m.id+"'>✕</button></div>").join("")+"</div>"+
  "<h2>Reviews</h2>"+(D.reviews.map(v=>"<div class='c'><b>"+esc(v.name)+"</b> · "+v.rating+"/5 "+(v.ok?"<span class='m'>(published)</span>":"<span style='color:var(--bad)'>(waiting for you)</span>")+"<p style='white-space:pre-wrap;margin:6px 0'>"+esc(v.text)+"</p><div class='row'>"+(v.ok?"<button class='g' data-ru='"+v.id+"'>Unpublish</button>":"<button class='k' data-ra='"+v.id+"'>Approve</button>")+"<button class='d' data-rd='"+v.id+"'>Delete</button></div></div>").join("")||"<p class='m'>No reviews yet.</p>")+
  "<h2>Services</h2><div id='sl'></div><div class='row'><button class='g' id='sa'>+ Add service</button><button id='ss'>Save services</button></div><p id='sm' class='m'></p>";
  drawSv(D.services);
- const f=$("f");if(f)f.onchange=()=>upload([...f.files]);
+ const f=$("f");if(f)f.onchange=()=>stage([...f.files]);
 }
 function drawSv(l){$("sl").innerHTML=l.map((s,i)=>"<div class='c'><input data-t='"+i+"' placeholder='Service name' value='"+esc(s.title)+"'><textarea data-x='"+i+"' rows='2' placeholder='Short description'>"+esc(s.text)+"</textarea><div class='row'><button class='g' data-sd='"+i+"'>Remove</button></div></div>").join("")}
 const readSv=()=>[...document.querySelectorAll("[data-t]")].map(i=>({title:i.value,text:document.querySelector("[data-x='"+i.dataset.t+"']").value}));
 o.onclick=async e=>{const t=e.target,d=t.dataset;if(!d)return;
+ if(d.pf){const[i,v]=d.pf.split("|");PEND[+i].focus=v;drawPend();return}if(t.id==="uc"){PEND=[];drawPend();return}if(t.id==="ug"){uploadPending();return}
  try{
   if(d.dm&&confirm("Remove this from the gallery?")){await api("delmedia","POST",{id:d.dm});load()}
   else if(d.ra){await api("reviewok","POST",{id:d.ra,ok:true});load()}
@@ -49,11 +50,18 @@ o.onclick=async e=>{const t=e.target,d=t.dataset;if(!d)return;
 function up(file,onp){return new Promise((res,rej)=>{const fd=new FormData();fd.append("file",file);fd.append("upload_preset",cfg.preset);const x=new XMLHttpRequest();
  x.open("POST","https://api.cloudinary.com/v1_1/"+cfg.name+"/auto/upload");x.upload.onprogress=e=>e.lengthComputable&&onp(e.loaded/e.total);
  x.onload=()=>{try{const j=JSON.parse(x.responseText);x.status<300?res(j):rej(new Error(j.error&&j.error.message||"Upload failed"))}catch(e){rej(e)}};x.onerror=()=>rej(new Error("Network error"));x.send(fd)})}
-async function upload(files){const st=$("st");let ok=0;
- for(let i=0;i<files.length;i++){const f=files[i];st.innerHTML=(i+1)+" of "+files.length+": "+esc(f.name)+"<div class='bar'><i id='pb'></i></div>";
-  try{const j=await up(f,p=>{$("pb").style.width=Math.round(p*100)+"%"});await api("addmedia","POST",{url:j.secure_url,type:j.resource_type==="video"?"video":"image"});ok++}
+const FOC=[["Top","50% 0%"],["Center","50% 50%"],["Bottom","50% 100%"],["Left","0% 50%"],["Right","100% 50%"]];
+let PEND=[];
+function stage(files){PEND=files.map(f=>({f,url:URL.createObjectURL(f),video:f.type.startsWith("video/"),focus:"50% 50%"}));drawPend();
+ PEND.forEach(p=>{if(!p.video){const im=new Image();im.onload=()=>{if(im.naturalHeight>im.naturalWidth*1.1){p.focus="50% 0%";drawPend()}};im.src=p.url}})}
+function drawPend(){const e=$("pv");if(!e)return;
+ e.innerHTML=(PEND.length?"<p class='m'>This is how each one will look on your site. Tap Top, Center, Bottom, Left or Right to choose what shows.</p>":"")+PEND.map((p,i)=>"<div class='pc'><div class='sq'>"+(p.video?"<video muted playsinline preload='metadata' src='"+p.url+"#t=0.5' style='object-position:"+p.focus+"'></video>":"<img src='"+p.url+"' style='object-position:"+p.focus+"'>")+"</div><div class='fo'>"+FOC.map(x=>"<button class='"+(p.focus===x[1]?"":"g")+"' data-pf='"+i+"|"+x[1]+"'>"+x[0]+"</button>").join("")+"</div></div>").join("")+(PEND.length?"<div class='row'><button id='ug'>Upload "+PEND.length+" file"+(PEND.length===1?"":"s")+"</button><button class='g' id='uc'>Cancel</button></div>":"")}
+async function uploadPending(){const st=$("st"),list=PEND.slice();let ok=0;
+ for(let i=0;i<list.length;i++){const p=list[i];st.innerHTML=(i+1)+" of "+list.length+": "+esc(p.f.name)+"<div class='bar'><i id='pb'></i></div>";
+  try{const j=await up(p.f,x=>{$("pb").style.width=Math.round(x*100)+"%"});await api("addmedia","POST",{url:j.secure_url,type:j.resource_type==="video"?"video":"image",focus:p.focus});ok++}
   catch(e){const m=e.message||"";const hint=/cloud/i.test(m)?" Your cloud name looks wrong.":/preset/i.test(m)?" The upload preset wasn't found, or it isn't set to Unsigned.":/size|large/i.test(m)?" The file is too big for the free plan.":"";
-   st.innerHTML="<span style='color:var(--bad)'>Couldn't upload "+esc(f.name)+": "+esc(m)+"."+hint+"</span>";return}}
- st.textContent="Uploaded "+ok+" file"+(ok===1?"":"s")+".";load()}
-localStorage.removeItem("pw");pw?load():login("",false);
+   st.innerHTML="<span style='color:var(--bad)'>Couldn't upload "+esc(p.f.name)+": "+esc(m)+"."+hint+"</span>";return}}
+ PEND=[];st.textContent="Uploaded "+ok+" file"+(ok===1?"":"s")+".";load()}
+o.onchange=async e=>{const t=e.target;if(t.dataset&&t.dataset.sf){try{await api("setfocus","POST",{id:t.dataset.sf,focus:t.value});load()}catch(err){}}};
+pw?load():login("",false);
 </script></body></html>

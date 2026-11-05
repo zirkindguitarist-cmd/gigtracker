@@ -15,8 +15,8 @@ h1{font-size:clamp(30px,6vw,46px);margin:14px 0 6px;line-height:1.15}.hero p{col
 section{padding:36px 0;border-top:1px solid var(--bd)}h2{font-size:26px;margin:0 0 6px}.sub{color:var(--mu);margin:0 0 20px}
 .g{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}.c{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:18px}.c h3{margin:0 0 6px;font-size:18px}.c p{margin:0;color:var(--mu)}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}.chip{border:1px solid var(--go);color:var(--go);border-radius:99px;padding:5px 14px;font-size:14px}
-.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}.gal img,.gal video{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;background:#000;display:block;cursor:zoom-in}.gal video{cursor:auto}
-.lb{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:9;padding:12px}.lb.o{display:flex}.lb img{max-width:100%;max-height:100%;border-radius:8px}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}.t{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:#000;cursor:pointer}.t img{width:100%;height:100%;object-fit:cover;display:block}.t .pl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:44px;color:#fff;text-shadow:0 2px 10px #000}
+.lb{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:9;padding:12px}.lb.o{display:flex}.lb img,.lb video{max-width:100%;max-height:100%;border-radius:8px}.lb .x{position:absolute;top:12px;right:14px;background:#0008;color:#fff;border:0;border-radius:99px;width:40px;height:40px;font-size:20px;cursor:pointer}
 .st{color:var(--go);letter-spacing:2px}.st i{color:#4a4655;font-style:normal}.rv{margin-bottom:12px}.rv small{color:var(--mu)}
 label{display:block;font-size:13px;color:var(--mu);margin:12px 0 3px}input,textarea,select{width:100%;font:inherit;padding:11px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx)}
 .hp{position:absolute;left:-9999px;height:0;overflow:hidden}.e{color:var(--mu)}footer{padding:30px 0 50px;text-align:center;color:var(--mu);font-size:14px;border-top:1px solid var(--bd)}
@@ -43,7 +43,7 @@ label{display:block;font-size:13px;color:var(--mu);margin:12px 0 3px}input,texta
 <div class="row" style="justify-content:flex-start"><a class="btn" href="/request.html">Request a gig</a><a class="btn o" href="tel:+13478525921">Call 347-852-5921</a><a class="btn o" href="sms:+13478525921">Text 347-852-5921</a></div></section>
 </div>
 <footer>© Yitschok Zirkind · Chicago, IL</footer>
-<div class="lb" id="lb"><img id="li" alt=""></div>
+<div class="lb" id="lb"><button class="x" id="lx">✕</button><div id="lc" style="max-width:100%;max-height:100%;display:flex"></div></div>
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -51,13 +51,15 @@ const U=(u,t)=>u.replace("/upload/","/upload/"+t+"/");
 const stars=n=>"★".repeat(n)+"<i>"+"★".repeat(5-n)+"</i>";
 fetch("/api/site?a=public").then(r=>r.json()).then(d=>{
  $("sv").innerHTML=(d.services||[]).map(s=>"<div class='c'><h3>"+esc(s.title)+"</h3><p>"+esc(s.text)+"</p></div>").join("");
- $("gl").innerHTML=(d.media||[]).map(m=>m.type==="video"
-  ?"<video controls playsinline preload='metadata' poster='"+U(m.url,"so_1,f_jpg,w_700,c_limit").replace(/\.\w+$/,".jpg")+"' src='"+U(m.url,"f_mp4,vc_h264,q_auto").replace(/\.\w+$/,".mp4")+"'></video>"
-  :"<img loading='lazy' alt='Event photo' src='"+U(m.url,"f_auto,q_auto,w_700,c_limit")+"' data-big='"+U(m.url,"f_auto,q_auto,w_1800,c_limit")+"'>").join("")||"<div class='e'>Photos and videos coming soon.</div>";
+ $("gl").innerHTML=(d.media||[]).map(m=>{const f=" style='object-position:"+esc(m.focus||"50% 50%")+"'";
+  return m.type==="video"
+   ?"<div class='t' data-v='"+U(m.url,"f_mp4,vc_h264,q_auto").replace(/\.\w+$/,".mp4")+"'><img loading='lazy' alt='Event video'"+f+" src='"+U(m.url,"so_1,f_jpg,w_900,h_900,c_limit").replace(/\.\w+$/,".jpg")+"'><span class='pl'>▶</span></div>"
+   :"<div class='t' data-big='"+U(m.url,"f_auto,q_auto,w_1800,c_limit")+"'><img loading='lazy' alt='Event photo'"+f+" src='"+U(m.url,"f_auto,q_auto,w_900,h_900,c_limit")+"'></div>"}).join("")||"<div class='e'>Photos and videos coming soon.</div>";
  $("rl").innerHTML=(d.reviews||[]).map(v=>"<div class='c rv'><div class='st'>"+stars(v.rating)+"</div><p style='color:var(--tx);white-space:pre-wrap'>"+esc(v.text)+"</p><small>— "+esc(v.name)+"</small></div>").join("")||"<div class='e'>Be the first to leave a review.</div>";
 }).catch(()=>{$("gl").innerHTML="<div class='e'>Couldn't load the gallery.</div>"});
-$("gl").onclick=e=>{const i=e.target.closest("img");if(i&&i.dataset.big){$("li").src=i.dataset.big;$("lb").classList.add("o")}};
-$("lb").onclick=()=>$("lb").classList.remove("o");
+$("gl").onclick=e=>{const t=e.target.closest(".t");if(!t)return;
+ $("lc").innerHTML=t.dataset.v?"<video controls autoplay playsinline src='"+t.dataset.v+"'></video>":"<img alt='' src='"+t.dataset.big+"'>";$("lb").classList.add("o")};
+$("lb").onclick=e=>{if(e.target.tagName==="VIDEO")return;$("lb").classList.remove("o");$("lc").innerHTML=""};
 $("rb").onclick=async()=>{const b=$("rb");b.disabled=true;$("rm").textContent="";
  try{const r=await fetch("/api/site?a=review",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({name:$("rn").value,rating:$("rs").value,text:$("rt").value,website:$("rw").value})});
   const j=await r.json().catch(()=>({}));
