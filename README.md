@@ -27,3 +27,9 @@ Upload the files in this folder to GitHub (replace existing ones). Netlify redep
 3. In Netlify, add CLOUDINARY_CLOUD_NAME and CLOUDINARY_UPLOAD_PRESET, then redeploy.
 4. Open /admin.html, log in, and choose files. Free plan limits: about 100 MB per video, 10 MB per photo.
 Deleting from the gallery only hides it from the site. The file stays in your Cloudinary account.
+
+## Login (app and admin)
+Sign in with APP_PASSWORD, then enter the 6-digit code emailed to REMIND_TO. The device stays signed in for 30 days.
+- 8 wrong tries from one address locks that address out for an hour. A code allows 5 guesses and expires in 10 minutes.
+- Changing APP_PASSWORD signs out every device.
+- If the code email ever stops working (Resend problem), add a Netlify variable SKIP_CODE = 1 and redeploy to log in with the password only. Remove it once email works again.

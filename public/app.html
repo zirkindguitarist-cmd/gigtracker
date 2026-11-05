@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Gigs">
+<meta name="robots" content="noindex">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Gig Tracker</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -58,7 +59,7 @@ function render(){render0();
  if(PD.length)$("list").innerHTML='<div class="day">Needs your review ('+PD.length+")</div>"+PD.map(g=>'<div class="c" data-id="'+g.id+'" style="border-color:var(--ac)"><span class="pill unp">Review</span><b>'+esc(g.title||"Request")+"</b><span>"+esc([fmtD(g.date),t12(g.start),g.venue].filter(Boolean).join(" · "))+"</span></div>").join("")+$("list").innerHTML}
 function open(h){$("s").innerHTML=h;$("m").classList.add("o")}
 function close(){$("m").classList.remove("o")}
-$("m").onclick=e=>{if(e.target.id==="m")close()};
+$("m").onclick=e=>{if(e.target.id==="m"&&!$("pwi"))close()};
 $("list").onclick=e=>{const c=e.target.closest(".c");if(c)detail(c.dataset.id)};
 $("add").onclick=()=>form({date:today()});
 $("bk").onclick=async()=>{const u=location.origin+"/request.html";try{await navigator.clipboard.writeText(u);$("note").textContent="Booking link copied: "+u}catch(e){$("note").textContent="Booking link: "+u}};
@@ -86,13 +87,18 @@ function form(g){
   if(o.type==="Other")o.type=(o.typeOther||"").trim()||"Other";delete o.typeOther;
   o.title=[o.type,o.client].filter(Boolean).join(" – ")||o.venue||"Gig";
   if(!o.date){alert("Pick a date.");return}o.id=o.id||"g"+Date.now().toString(36);await save(o.id,o);detail(o.id)}}
-let pw=localStorage.getItem("pw")||"";
-function askPw(bad){return new Promise(res=>{open('<h2 style="margin:0">Password</h2>'+(bad?'<p style="color:var(--bad)">Wrong password. Try again.</p>':"")+'<input id="pwi" type="password" autocomplete="current-password" style="margin-top:10px"><div class="row"><button id="pwb">Unlock</button></div>');
- const go=()=>{const v=$("pwi").value;if(v){close();res(v)}};$("pwb").onclick=go;$("pwi").onkeydown=e=>{if(e.key==="Enter")go()}})}
+let pw=localStorage.getItem("tok")||"";localStorage.removeItem("pw");
+function askPw(bad){return new Promise(res=>{
+ const box=(label,msg,err,ph,type,cb)=>{open('<h2 style="margin:0">'+label+'</h2>'+(msg?'<p style="color:var(--'+(err?'bad':'mu')+')">'+msg+'</p>':"")+'<input id="pwi" type="'+type+'" placeholder="'+ph+'" autocomplete="'+(type==="password"?"current-password":"one-time-code")+'" style="margin-top:10px"><div class="row"><button id="pwb">Continue</button></div>');
+  const go=()=>{const v=$("pwi").value.trim();if(v)cb(v)};$("pwb").onclick=go;$("pwi").onkeydown=e=>{if(e.key==="Enter")go()}};
+ const post=async b=>{try{const r=await fetch("/api/auth",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(b)});return{ok:r.ok,j:await r.json().catch(()=>({}))}}catch(e){return{ok:false,j:{error:"Can't reach the server."}}}};
+ const p1=(msg,err)=>box("Password",msg,err,"Password","password",async v=>{const x=await post({pw:v});if(!x.ok)return p1(x.j.error||"Wrong password.",true);if(x.j.token){close();res(x.j.token)}else p2(v,"We emailed you a 6-digit code.",false)});
+ const p2=(v,msg,err)=>box("Enter code",msg,err,"6-digit code","text",async c=>{const x=await post({pw:v,code:c});if(!x.ok)return p2(v,x.j.error||"Wrong code.",true);close();res(x.j.token)});
+ p1(bad?"Please sign in again.":"",!!bad)})}
 async function api(method,body,bad){
- if(!pw){pw=await askPw(bad);localStorage.setItem("pw",pw)}
+ if(!pw){pw=await askPw(bad);localStorage.setItem("tok",pw)}
  try{const r=await fetch("/api/gigs",{method,headers:{"content-type":"application/json","x-pass":pw},body:body?JSON.stringify(body):undefined});
-  if(r.status===401){localStorage.removeItem("pw");pw="";return api(method,body,true)}
+  if(r.status===401){localStorage.removeItem("tok");pw="";return api(method,body,true)}
   if(!r.ok){$("note").textContent="Server error "+r.status;return null}$("note").textContent="";return await r.json()}catch(e){$("note").textContent="Can't reach the server.";return null}}
 async function refresh(){const d=await api("GET");if(d){gigs=d;render()}}
 async function save(id,o){const d=await api("POST",o?{gig:o}:{del:id});if(d)await refresh()}

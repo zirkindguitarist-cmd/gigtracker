@@ -22,5 +22,10 @@
   to = "/.netlify/functions/site"
   status = 200
 
+[[redirects]]
+  from = "/api/auth"
+  to = "/.netlify/functions/auth"
+  status = 200
+
 [functions.remind]
   schedule = "0 13 * * *"

@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Site admin</title>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>Site admin</title>
 <style>
 :root{--bg:#faf8f5;--card:#fff;--tx:#1d1b19;--mu:#7a746c;--ac:#6d3df0;--bd:#e7e2da;--bad:#d64545;--ok:#1f9d55}
 @media(prefers-color-scheme:dark){:root{--bg:#141318;--card:#1e1c24;--tx:#f1eee9;--mu:#9a94a3;--ac:#9b7bff;--bd:#2f2c38}}
@@ -10,17 +11,21 @@ input,textarea{width:100%;font:inherit;padding:10px;border-radius:10px;border:1p
 .grid button{position:absolute;top:4px;right:4px;padding:4px 9px}.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.bar{height:6px;background:var(--bd);border-radius:6px;margin-top:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ac);width:0}
 </style></head><body><div class="w"><h1>Site admin</h1><p class="m"><a href="/" style="color:var(--ac)">View site</a> · <a href="/app" style="color:var(--ac)">Gig app</a></p><div id="o">Loading…</div></div>
 <script>
-const $=id=>document.getElementById(id),o=$("o");let pw=localStorage.getItem("pw")||"",D=null,cfg={};
+const $=id=>document.getElementById(id),o=$("o");let pw=localStorage.getItem("tok")||"",D=null,cfg={};
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const U=(u,t)=>u.replace("/upload/","/upload/"+t+"/");
 async function api(a,method,body){const r=await fetch("/api/site?a="+a,{method:method||"GET",headers:{"content-type":"application/json","x-pass":pw},body:body?JSON.stringify(body):undefined});
- if(r.status===401){localStorage.removeItem("pw");pw="";login(true);throw new Error("auth")}if(!r.ok)throw new Error("Error "+r.status);return r.json()}
-function login(bad){o.innerHTML="<div class='c'><b>Password</b>"+(bad?"<p style='color:var(--bad)'>Wrong password.</p>":"")+"<input id='p' type='password'><div class='row'><button id='go'>Unlock</button></div></div>";
- const go=()=>{pw=$("p").value;if(pw){localStorage.setItem("pw",pw);load()}};$("go").onclick=go;$("p").onkeydown=e=>{if(e.key==="Enter")go()}}
+ if(r.status===401){localStorage.removeItem("tok");pw="";login("Please sign in again.",true);throw new Error("auth")}if(!r.ok)throw new Error("Error "+r.status);return r.json()}
+function login(msg,err,step,pwv){o.innerHTML="<div class='c'><b>"+(step?"Enter code":"Password")+"</b>"+(msg?"<p style='color:var(--"+(err?"bad":"mu")+")'>"+msg+"</p>":"")+"<input id='p' type='"+(step?"text":"password")+"' placeholder='"+(step?"6-digit code":"Password")+"' autocomplete='"+(step?"one-time-code":"current-password")+"'><div class='row'><button id='go'>Continue</button></div></div>";
+ const go=async()=>{const v=$("p").value.trim();if(!v)return;let r,j={};
+  try{r=await fetch("/api/auth",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(step?{pw:pwv,code:v}:{pw:v})});j=await r.json().catch(()=>({}))}catch(e){return login("Can't reach the server.",true,step,pwv)}
+  if(!r.ok)return login(j.error||"Try again.",true,step,pwv);
+  if(j.token){pw=j.token;localStorage.setItem("tok",pw);load()}else login("We emailed you a 6-digit code.",false,true,v)};
+ $("go").onclick=go;$("p").onkeydown=e=>{if(e.key==="Enter")go()}}
 async function load(){try{D=await api("admin");cfg=D.cloud;draw()}catch(e){if(e.message!=="auth")o.textContent="Couldn't load: "+e.message}}
 function draw(){
  const ready=cfg.name&&cfg.preset;
- o.innerHTML="<h2>Upload photos &amp; videos</h2><div class='c'>"+(ready?"<input id='f' type='file' accept='image/*,video/*' multiple><div id='st' class='m'></div>":"<p>Uploads aren't set up yet. Add CLOUDINARY_CLOUD_NAME and CLOUDINARY_UPLOAD_PRESET in Netlify, then redeploy.</p>")+"</div>"+
+ o.innerHTML="<h2>Upload photos &amp; videos</h2><div class='c'>"+(ready?"<p class='m'>Connected to Cloudinary: <b>"+esc(cfg.name)+"</b> (preset "+esc(cfg.preset)+")</p><input id='f' type='file' accept='image/*,video/*' multiple><div id='st' class='m'></div>":"<p>Uploads aren't set up yet. Add CLOUDINARY_CLOUD_NAME and CLOUDINARY_UPLOAD_PRESET in Netlify, then redeploy.</p>")+"<hr style='border:0;border-top:1px solid var(--bd);margin:14px 0'><b>Already uploaded in Cloudinary?</b><p class='m'>Pictures you add inside Cloudinary's own website don't appear here automatically. Open one in your Media Library, copy its link, and paste it below.</p><input id='lu' placeholder='https://res.cloudinary.com/...'><div class='row'><button class='g' id='la'>Add this link</button></div><div id='lm' class='m'></div></div>"+
  "<h2>Gallery ("+D.media.length+")</h2><div class='grid'>"+D.media.map(m=>"<div>"+(m.type==="video"?"<video muted preload='metadata' src='"+U(m.url,"f_mp4,vc_h264,q_auto").replace(/\.\w+$/,".mp4")+"#t=0.5'></video>":"<img src='"+U(m.url,"f_auto,q_auto,w_300,c_fill,h_300")+"'>")+"<button class='d' data-dm='"+m.id+"'>✕</button></div>").join("")+"</div>"+
  "<h2>Reviews</h2>"+(D.reviews.map(v=>"<div class='c'><b>"+esc(v.name)+"</b> · "+v.rating+"/5 "+(v.ok?"<span class='m'>(published)</span>":"<span style='color:var(--bad)'>(waiting for you)</span>")+"<p style='white-space:pre-wrap;margin:6px 0'>"+esc(v.text)+"</p><div class='row'>"+(v.ok?"<button class='g' data-ru='"+v.id+"'>Unpublish</button>":"<button class='k' data-ra='"+v.id+"'>Approve</button>")+"<button class='d' data-rd='"+v.id+"'>Delete</button></div></div>").join("")||"<p class='m'>No reviews yet.</p>")+
  "<h2>Services</h2><div id='sl'></div><div class='row'><button class='g' id='sa'>+ Add service</button><button id='ss'>Save services</button></div><p id='sm' class='m'></p>";
@@ -36,6 +41,8 @@ o.onclick=async e=>{const t=e.target,d=t.dataset;if(!d)return;
   else if(d.ru){await api("reviewok","POST",{id:d.ru,ok:false});load()}
   else if(d.rd&&confirm("Delete this review?")){await api("delreview","POST",{id:d.rd});load()}
   else if(d.sd!==undefined){const l=readSv();l.splice(+d.sd,1);drawSv(l)}
+  else if(t.id==="la"){const u=$("lu").value.trim();if(!/^https:\/\/res\.cloudinary\.com\//.test(u)){$("lm").textContent="That doesn't look like a Cloudinary link. It should start with https://res.cloudinary.com/";return}
+   await api("addmedia","POST",{url:u,type:/\/video\/upload\//.test(u)?"video":"image"});load()}
   else if(t.id==="sa"){const l=readSv();l.push({title:"",text:""});drawSv(l)}
   else if(t.id==="ss"){await api("services","POST",{services:readSv()});$("sm").textContent="Saved."}
  }catch(err){if(err.message!=="auth")alert(err.message)}};
@@ -45,7 +52,8 @@ function up(file,onp){return new Promise((res,rej)=>{const fd=new FormData();fd.
 async function upload(files){const st=$("st");let ok=0;
  for(let i=0;i<files.length;i++){const f=files[i];st.innerHTML=(i+1)+" of "+files.length+": "+esc(f.name)+"<div class='bar'><i id='pb'></i></div>";
   try{const j=await up(f,p=>{$("pb").style.width=Math.round(p*100)+"%"});await api("addmedia","POST",{url:j.secure_url,type:j.resource_type==="video"?"video":"image"});ok++}
-  catch(e){st.innerHTML="<span style='color:var(--bad)'>Couldn't upload "+esc(f.name)+": "+esc(e.message)+"</span>";return}}
+  catch(e){const m=e.message||"";const hint=/cloud/i.test(m)?" Your cloud name looks wrong.":/preset/i.test(m)?" The upload preset wasn't found, or it isn't set to Unsigned.":/size|large/i.test(m)?" The file is too big for the free plan.":"";
+   st.innerHTML="<span style='color:var(--bad)'>Couldn't upload "+esc(f.name)+": "+esc(m)+"."+hint+"</span>";return}}
  st.textContent="Uploaded "+ok+" file"+(ok===1?"":"s")+".";load()}
-pw?load():login(false);
+localStorage.removeItem("pw");pw?load():login("",false);
 </script></body></html>
