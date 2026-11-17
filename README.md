@@ -33,3 +33,13 @@ Sign in with APP_PASSWORD, then enter the 6-digit code emailed to REMIND_TO. The
 - 8 wrong tries from one address locks that address out for an hour. A code allows 5 guesses and expires in 10 minutes.
 - Changing APP_PASSWORD signs out every device.
 - If the code email ever stops working (Resend problem), add a Netlify variable SKIP_CODE = 1 and redeploy to log in with the password only. Remove it once email works again.
+
+## Confirming a booking to the client
+When you approve a request (in the app, or from the email link) the app shows one-tap buttons to text or email the
+client a confirmation from your own phone and email. That works with no setup.
+To send it automatically instead, add these Netlify settings and redeploy:
+- Email: MAIL_FROM, for example  Yitschok Zirkind <bookings@yourdomain.com> . Resend only emails other people
+  after you verify your own domain in Resend (Domains). Replies go to REMIND_TO.
+- Text: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM (your Twilio number, like +18005550123).
+  US texting needs Twilio's number registration or toll-free verification before messages are delivered.
+Each booking is only confirmed once, even if you edit it later.
