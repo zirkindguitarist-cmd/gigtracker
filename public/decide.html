@@ -18,6 +18,7 @@ const send=async a=>{const r=await fetch(u,{method:"POST",headers:{"content-type
   const bt="display:block;text-align:center;text-decoration:none;background:#6d3df0;color:#fff;border-radius:10px;padding:14px;margin-top:10px;font-weight:600";let h="";
   if(n.email)h+="<p style='color:#1f9d55'>✓ Confirmation emailed to "+esc(G.email)+".</p>";if(n.sms)h+="<p style='color:#1f9d55'>✓ Confirmation texted to "+esc(G.phone)+".</p>";
   if(!n.sms&&pe(G.phone))h+="<a style='"+bt+"' href='sms:"+pe(G.phone)+"?&body="+encodeURIComponent(msg)+"'>Text "+esc(G.phone)+" the confirmation</a>";
+  if(pe(G.phone))h+="<a style='"+bt.replace("#6d3df0","#25D366")+"' target='_blank' rel='noopener' href='https://wa.me/"+pe(G.phone).replace("+","")+"?text="+encodeURIComponent(msg)+"'>WhatsApp "+esc(G.phone)+"</a>";
   if(!n.email&&G.email)h+="<a style='"+bt+"' href='mailto:"+encodeURIComponent(G.email)+"?subject="+encodeURIComponent("Your event is confirmed")+"&body="+encodeURIComponent(msg)+"'>Email "+esc(G.email)+" the confirmation</a>";
   o.insertAdjacentHTML("beforeend",h)}};
 fetch(u).then(async r=>{if(!r.ok){o.textContent="This request was already handled, or the link isn't valid.";return}

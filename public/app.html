@@ -69,15 +69,16 @@ $("bk").onclick=async()=>{const u=location.origin+"/request.html";try{await navi
 $("tp").onclick=()=>{showPast=!showPast;render()};
 function detail(id){const g=gigs.find(x=>x.id===id);if(!g)return;const PEND=g.status==="pending";
  const rows=[["Status",PEND?"Pending your approval":(g.paid?"Paid "+(g.paidDate||""):"")],["Date",fmtD(g.date)],["Time",t12(g.start)],["Type",g.type],["Venue",g.venue],["Address",g.address],["Client",g.client],["Phone",g.phone],["Email",g.email],["Fee",g.fee?money(g.fee):""],["Deposit",g.deposit?money(g.deposit):""],["Balance due",g.fee?money((+g.fee||0)-(+g.deposit||0)):""]].filter(r=>r[1]);
- let h="<h2 style='margin:0 0 8px'>"+esc(g.title||"Untitled gig")+"</h2>"+rows.map(r=>'<div class="k"><span>'+r[0]+"</span><span style='text-align:right'>"+esc(r[1])+"</span></div>").join("");
+ let h="<div style='display:flex;justify-content:space-between;align-items:flex-start;gap:12px'><h2 style='margin:0 0 8px'>"+esc(g.title||"Untitled gig")+"</h2>"+(PEND?"":"<button class='d' id='del' style='padding:6px 12px;font-size:14px;flex-shrink:0'>Delete</button>")+"</div>"+rows.map(r=>'<div class="k"><span>'+r[0]+"</span><span style='text-align:right'>"+esc(r[1])+"</span></div>").join("");
  if(g.address)h+='<p><a style="color:var(--ac)" target="_blank" rel="noopener" href="https://maps.google.com/?q='+encodeURIComponent(g.address)+'">Open in Maps</a></p>';
  if(g.notes)h+="<p style='white-space:pre-wrap'>"+esc(g.notes)+"</p>";
  h+=PEND?'<div class="row"><button id="ap" style="background:var(--ok)">Approve</button><button class="d" id="dn">Deny</button><button id="ed">Edit</button><button class="g" id="x">Close</button></div>'
-  :'<div class="row"><button id="ed">Edit</button><button id="pd">'+(g.paid?"Mark unpaid":"Mark paid")+'</button><button id="iv">Send invoice PDF</button><button id="ic">Add to calendar (alerts)</button><button class="g" id="x">Close</button><button class="d" id="del">Delete</button></div>';
+  :'<div class="row"><button id="ed">Edit</button><button id="pd">'+(g.paid?"Mark unpaid":"Mark paid")+'</button><button id="iv">Send invoice PDF</button><button id="ic">Add to calendar (alerts)</button><button class="g" id="x">Close</button></div>';
  open(h);$("x").onclick=close;$("ed").onclick=()=>form(g);
- if(PEND){$("ap").onclick=async()=>{const d=await save(g.id,{...g,status:""});if(d)confirmSheet(gigs.find(x=>x.id===g.id)||g,d.notified);};$("dn").onclick=async()=>{if(confirm("Deny and remove this request?")){await save(g.id,null);close()}}}
- else{$("del").onclick=async()=>{if(confirm("Delete this gig?")){await save(g.id,null);close()}};
+ if(PEND){$("ap").onclick=async()=>{const d=await save(g.id,{...g,status:""});if(d)confirmSheet(gigs.find(x=>x.id===g.id)||g,d.notified);};$("dn").onclick=()=>sure(g,"Deny this request?","<b>"+esc(g.title||"This request")+"</b> will be removed. This can't be undone.","Yes, deny",async()=>{await save(g.id,null);close()})}
+ else{$("del").onclick=()=>sure(g,"Delete this gig?","<b>"+esc(g.title||"This gig")+"</b> on "+esc(fmtD(g.date))+" will be permanently deleted. This can't be undone.","Yes, delete",async()=>{await save(g.id,null);close()});
   $("pd").onclick=async()=>{await save(g.id,{...g,paid:!g.paid,paidDate:g.paid?"":today()});detail(g.id)};$("iv").onclick=()=>invoice(g);$("ic").onclick=()=>ics(g)}}
+function sure(g,title,text,yes,fn){open("<h2 style='margin:0 0 8px'>"+title+"</h2><p>"+text+"</p><div class='row'><button id='no' style='flex:1'>No, keep it</button><button class='d' id='yes' style='flex:1'>"+yes+"</button></div>");$("no").onclick=()=>detail(g.id);$("yes").onclick=fn}
 function phoneE(p){const d=String(p||"").replace(/\D/g,"");return d.length===10?"+1"+d:(d.length===11&&d[0]==="1"?"+"+d:(d?"+"+d:""))}
 function confMsg(g){const f=(g.client||"").trim().split(/\s+/)[0]||"there";return "Hi "+f+", your event has been confirmed: "+(g.type||"event")+" on "+fmtD(g.date)+(g.start?" at "+t12(g.start):"")+(g.venue?" at "+g.venue:"")+". Thank you! Questions? Call or text 347-852-5921. - Yitschok Zirkind"}
 function confirmSheet(g,n){n=n||{};const msg=confMsg(g),ph=phoneE(g.phone),bt="display:block;text-align:center;text-decoration:none;background:var(--ac);color:#fff;border-radius:10px;padding:13px;margin-top:8px";
@@ -86,6 +87,7 @@ function confirmSheet(g,n){n=n||{};const msg=confMsg(g),ph=phoneE(g.phone),bt="d
  if(n.sms)h+="<p style='color:var(--ok)'>✓ Confirmation texted to "+esc(g.phone)+".</p>";
  const rows=[];
  if(!n.sms&&ph)rows.push("<a style='"+bt+"' href='sms:"+ph+"?&body="+encodeURIComponent(msg)+"'>Text "+esc(g.phone)+"</a>");
+ if(ph)rows.push("<a style='"+bt.replace("var(--ac)","#25D366")+"' target='_blank' rel='noopener' href='https://wa.me/"+ph.replace("+","")+"?text="+encodeURIComponent(msg)+"'>WhatsApp "+esc(g.phone)+"</a>");
  if(!n.email&&g.email)rows.push("<a style='"+bt+"' href='mailto:"+encodeURIComponent(g.email)+"?subject="+encodeURIComponent("Your event is confirmed")+"&body="+encodeURIComponent(msg)+"'>Email "+esc(g.email)+"</a>");
  if(rows.length)h+="<p style='color:var(--mu)'>Send them the confirmation:</p>"+rows.join("");
  else if(!n.email&&!n.sms)h+="<p style='color:var(--mu)'>No phone number or email was given, so there is no one to notify.</p>";
