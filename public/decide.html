@@ -9,10 +9,19 @@ label{display:block;font-size:13px;color:#7a746c;margin:12px 0 3px}input,select,
 const q=new URLSearchParams(location.search),o=document.getElementById("o"),u="/api/pub?a=decide&id="+encodeURIComponent(q.get("id")||"")+"&t="+encodeURIComponent(q.get("t")||"");
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const t12=t=>{if(!t)return"";let[h,m]=t.split(":");h=+h;return(h%12||12)+":"+m+(h<12?" AM":" PM")};
+let G=null;
+const fd=d=>new Date(d+"T12:00").toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"});
+const pe=p=>{const d=String(p||"").replace(/\D/g,"");return d.length===10?"+1"+d:(d.length===11&&d[0]==="1"?"+"+d:(d?"+"+d:""))};
 const send=async a=>{const r=await fetch(u,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:a})});if(!r.ok){alert("Couldn't save. Try again.");return}
- const j=await r.json();o.innerHTML="<h1>"+({approved:"✓ Approved. It's on your calendar.",denied:"Request denied and removed.",already:"This request was already handled."}[j.done]||"Done")+"</h1>"};
+ const j=await r.json();o.innerHTML="<h1>"+({approved:"✓ Approved. It's on your calendar.",denied:"Request denied and removed.",already:"This request was already handled."}[j.done]||"Done")+"</h1>";
+ if(j.done==="approved"&&G){const n=j.notified||{},f=(G.client||"").trim().split(/\s+/)[0]||"there",msg="Hi "+f+", your event has been confirmed: "+(G.type||"event")+" on "+fd(G.date)+(G.start?" at "+t12(G.start):"")+(G.venue?" at "+G.venue:"")+". Thank you! Questions? Call or text 347-852-5921. - Yitschok Zirkind";
+  const bt="display:block;text-align:center;text-decoration:none;background:#6d3df0;color:#fff;border-radius:10px;padding:14px;margin-top:10px;font-weight:600";let h="";
+  if(n.email)h+="<p style='color:#1f9d55'>✓ Confirmation emailed to "+esc(G.email)+".</p>";if(n.sms)h+="<p style='color:#1f9d55'>✓ Confirmation texted to "+esc(G.phone)+".</p>";
+  if(!n.sms&&pe(G.phone))h+="<a style='"+bt+"' href='sms:"+pe(G.phone)+"?&body="+encodeURIComponent(msg)+"'>Text "+esc(G.phone)+" the confirmation</a>";
+  if(!n.email&&G.email)h+="<a style='"+bt+"' href='mailto:"+encodeURIComponent(G.email)+"?subject="+encodeURIComponent("Your event is confirmed")+"&body="+encodeURIComponent(msg)+"'>Email "+esc(G.email)+" the confirmation</a>";
+  o.insertAdjacentHTML("beforeend",h)}};
 fetch(u).then(async r=>{if(!r.ok){o.textContent="This request was already handled, or the link isn't valid.";return}
- const g=await r.json();const row=(a,b)=>b?"<div class='k'><span>"+a+"</span><span style='text-align:right'>"+esc(b)+"</span></div>":"";
+ const g=await r.json();G=g;const row=(a,b)=>b?"<div class='k'><span>"+a+"</span><span style='text-align:right'>"+esc(b)+"</span></div>":"";
  o.innerHTML="<h1>"+esc(g.title)+"</h1>"+row("Date",g.date)+row("Start",t12(g.start))+row("Venue",g.venue)+row("Address",g.address)+row("Name",g.client)+row("Phone",g.phone)+row("Email",g.email)+
   (g.notes?"<p style='white-space:pre-wrap'>"+esc(g.notes)+"</p>":"")+
   (g.pending?"<button id='a'>Approve</button><button class='d' id='n'>Deny</button>":"<p>This request was already approved.</p>");

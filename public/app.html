@@ -75,9 +75,21 @@ function detail(id){const g=gigs.find(x=>x.id===id);if(!g)return;const PEND=g.st
  h+=PEND?'<div class="row"><button id="ap" style="background:var(--ok)">Approve</button><button class="d" id="dn">Deny</button><button id="ed">Edit</button><button class="g" id="x">Close</button></div>'
   :'<div class="row"><button id="ed">Edit</button><button id="pd">'+(g.paid?"Mark unpaid":"Mark paid")+'</button><button id="iv">Send invoice PDF</button><button id="ic">Add to calendar (alerts)</button><button class="g" id="x">Close</button><button class="d" id="del">Delete</button></div>';
  open(h);$("x").onclick=close;$("ed").onclick=()=>form(g);
- if(PEND){$("ap").onclick=async()=>{await save(g.id,{...g,status:""});detail(g.id)};$("dn").onclick=async()=>{if(confirm("Deny and remove this request?")){await save(g.id,null);close()}}}
+ if(PEND){$("ap").onclick=async()=>{const d=await save(g.id,{...g,status:""});if(d)confirmSheet(gigs.find(x=>x.id===g.id)||g,d.notified);};$("dn").onclick=async()=>{if(confirm("Deny and remove this request?")){await save(g.id,null);close()}}}
  else{$("del").onclick=async()=>{if(confirm("Delete this gig?")){await save(g.id,null);close()}};
   $("pd").onclick=async()=>{await save(g.id,{...g,paid:!g.paid,paidDate:g.paid?"":today()});detail(g.id)};$("iv").onclick=()=>invoice(g);$("ic").onclick=()=>ics(g)}}
+function phoneE(p){const d=String(p||"").replace(/\D/g,"");return d.length===10?"+1"+d:(d.length===11&&d[0]==="1"?"+"+d:(d?"+"+d:""))}
+function confMsg(g){const f=(g.client||"").trim().split(/\s+/)[0]||"there";return "Hi "+f+", your event has been confirmed: "+(g.type||"event")+" on "+fmtD(g.date)+(g.start?" at "+t12(g.start):"")+(g.venue?" at "+g.venue:"")+". Thank you! Questions? Call or text 347-852-5921. - Yitschok Zirkind"}
+function confirmSheet(g,n){n=n||{};const msg=confMsg(g),ph=phoneE(g.phone),bt="display:block;text-align:center;text-decoration:none;background:var(--ac);color:#fff;border-radius:10px;padding:13px;margin-top:8px";
+ let h="<h2 style='margin:0 0 8px'>Approved ✓</h2><p>"+esc(g.title)+" is now on your calendar.</p>";
+ if(n.email)h+="<p style='color:var(--ok)'>✓ Confirmation emailed to "+esc(g.email)+".</p>";
+ if(n.sms)h+="<p style='color:var(--ok)'>✓ Confirmation texted to "+esc(g.phone)+".</p>";
+ const rows=[];
+ if(!n.sms&&ph)rows.push("<a style='"+bt+"' href='sms:"+ph+"?&body="+encodeURIComponent(msg)+"'>Text "+esc(g.phone)+"</a>");
+ if(!n.email&&g.email)rows.push("<a style='"+bt+"' href='mailto:"+encodeURIComponent(g.email)+"?subject="+encodeURIComponent("Your event is confirmed")+"&body="+encodeURIComponent(msg)+"'>Email "+esc(g.email)+"</a>");
+ if(rows.length)h+="<p style='color:var(--mu)'>Send them the confirmation:</p>"+rows.join("");
+ else if(!n.email&&!n.sms)h+="<p style='color:var(--mu)'>No phone number or email was given, so there is no one to notify.</p>";
+ h+='<div class="row"><button class="g" id="cd">Done</button></div>';open(h);$("cd").onclick=()=>detail(g.id)}
 function selHtml(g){const cur=(g.type||"").replace("Achnasas","Hachnassas"),known=TY.includes(cur),sel=cur?(known?cur:"Other"):"Wedding";
  return '<select data-k="type" id="tysel">'+TY.map(x=>"<option"+(x===sel?" selected":"")+">"+x+"</option>").join("")+'</select><input data-k="typeOther" id="tyo" placeholder="Type the event type" style="margin-top:6px;display:'+(sel==="Other"?"block":"none")+'" value="'+esc(known||cur==="Other"?"":cur)+'">'}
 function form(g){
@@ -104,7 +116,7 @@ async function api(method,body,bad){
   if(r.status===401){localStorage.removeItem("tok");pw="";return api(method,body,true)}
   if(!r.ok){$("note").textContent="Server error "+r.status;return null}$("note").textContent="";return await r.json()}catch(e){$("note").textContent="Can't reach the server.";return null}}
 async function refresh(){const d=await api("GET");if(d){gigs=d;render()}}
-async function save(id,o){const d=await api("POST",o?{gig:o}:{del:id});if(d)await refresh()}
+async function save(id,o){const d=await api("POST",o?{gig:o}:{del:id});if(d)await refresh();return d}
 async function sharePdf(name,data){
  const blob=new Blob([data],{type:"application/pdf"});
  try{if(navigator.canShare){const f=new File([blob],name,{type:"application/pdf"});if(navigator.canShare({files:[f]})){await navigator.share({files:[f],title:name});return}}}catch(e){if(e&&e.name==="AbortError")return}
